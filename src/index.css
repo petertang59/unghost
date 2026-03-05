@@ -1,0 +1,25 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  * {
+    border-color: #e5e7eb;
+  }
+  .dark * {
+    border-color: #374151;
+  }
+
+  input, textarea, select {
+    border: 1px solid #e5e7eb;
+    outline: none;
+  }
+  .dark input, .dark textarea, .dark select {
+    border: 1px solid #374151;
+  }
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
