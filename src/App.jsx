@@ -695,7 +695,7 @@ export default function UnGhost() {
           {currentView === 'home' && currentPage === 'dashboard' && (
             <div>
               {friends.length === 0 ? (
-                <div className="bg-white dark:bg-gray-800 border rounded-md p-12 text-center">
+                <div className="bg-white dark:bg-gray-800 border rounded-md p-12 text-center h-[400px]">
                   <h2 className="text-xl font-semibold mb-2">Welcome to UnGhost!</h2>
                   <p className="text-gray-600 dark:text-gray-400 mb-6">Track your friendships</p>
                   <button onClick={() => setShowAddFriendModal(true)} className="px-6 py-3 bg-gray-900 dark:bg-gray-700 text-white rounded-md hover:bg-gray-800 dark:hover:bg-gray-600 inline-flex items-center gap-2 text-sm"><UserPlus size={20} />Add Your First Friend</button>
