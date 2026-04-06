@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { UserPlus, Calendar, Trash2, Edit2, X, Plus, Home, UserCircle, Network, ChevronDown, MoreVertical, Phone, Mail, Bell, Check, Cake, ArrowUp, ArrowDown, Download, Upload, Menu, Search, Sun, Moon } from 'lucide-react';
+import { UserPlus, Calendar, Trash2, Edit2, X, Plus, Home, UserCircle, Network, ChevronDown, MoreVertical, Phone, Mail, Bell, Check, CheckCircle, Cake, ArrowUp, ArrowDown, Download, Upload, Menu, Search, Sun, Moon } from 'lucide-react';
 
 // Smart dropdown that positions itself to avoid viewport clipping
 function SmartDropdown({ anchorRect, open, onClose, children }) {
@@ -96,6 +96,7 @@ export default function UnGhost() {
   const [eventsFriendFilterRect, setEventsFriendFilterRect] = useState(null);
   const [eventsDateFilterRect, setEventsDateFilterRect] = useState(null);
   const [editCheckInFriendSearch, setEditCheckInFriendSearch] = useState('');
+  const [taggedFriendsSearch, setTaggedFriendsSearch] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [isDark, setIsDark] = useState(() => localStorage.getItem('unghost-theme') === 'dark');
   const [likesInput, setLikesInput] = useState('');
@@ -503,7 +504,7 @@ export default function UnGhost() {
         <div className="p-2 space-y-1">
           {[
             { page: 'dashboard', icon: <Home size={16} />, label: 'Home' },
-            { page: 'friends', icon: <UserCircle size={16} />, label: 'Friends' },
+            { page: 'friends', icon: <UserCircle size={16} />, label: 'People' },
             { page: 'groups', icon: <Network size={16} />, label: 'Groups' },
             { page: 'events', icon: <Calendar size={16} />, label: 'Events' },
           ].map(({ page, icon, label }) => (
@@ -523,7 +524,7 @@ export default function UnGhost() {
           {currentView === 'detail' && viewingFriend && (
             <div>
               <div className="flex items-center gap-1.5 text-sm mb-6">
-                <button onClick={() => { setCurrentView('home'); setCurrentPage('friends'); setViewingFriendId(null); setIsEditingFriend(false); setEditedFriend(null); }} className="text-gray-500 dark:text-gray-400 hover:text-gray-900">Friends</button>
+                <button onClick={() => { setCurrentView('home'); setCurrentPage('friends'); setViewingFriendId(null); setIsEditingFriend(false); setEditedFriend(null); }} className="text-gray-500 dark:text-gray-400 hover:text-gray-900">People</button>
                 <ChevronDown size={14} className="text-gray-400 dark:text-gray-500 -rotate-90" />
                 <span className="text-gray-900 dark:text-gray-50 font-medium">{viewingFriend.name}</span>
               </div>
@@ -545,7 +546,7 @@ export default function UnGhost() {
                           <button onClick={(e) => { setGroupActionsRect(e.currentTarget.getBoundingClientRect()); setGroupActionsOpen(groupActionsOpen === viewingFriend.id ? null : viewingFriend.id); }} className="p-2 text-gray-400 dark:text-gray-500 hover:text-gray-900 rounded border border-gray-200 dark:border-gray-700"><MoreVertical size={16} /></button>
                           <SmartDropdown anchorRect={groupActionsRect} open={groupActionsOpen === viewingFriend.id} onClose={() => setGroupActionsOpen(null)}>
                             <button onClick={() => { const parts = viewingFriend.name.split(' '); setEditedFriend({ ...viewingFriend, firstName: parts[0] || '', lastName: parts.slice(1).join(' ') || '', groups: viewingFriend.groups || [] }); setIsEditingFriend(true); setGroupActionsOpen(null); setLikesInput(''); }} className="w-full px-4 py-2.5 text-sm text-left text-gray-900 dark:text-gray-50 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"><Edit2 size={14} className="text-gray-400 dark:text-gray-500" />Edit</button>
-                            <button onClick={() => { setGroupActionsOpen(null); if (confirm('Delete this friend?')) { setFriends(friends.filter(f => f.id !== viewingFriend.id)); setCurrentView('home'); setViewingFriendId(null); } }} className="w-full px-4 py-2.5 text-sm text-left hover:bg-red-50 text-red-600 flex items-center gap-2"><Trash2 size={14} />Delete</button>
+                            <button onClick={() => { setGroupActionsOpen(null); if (confirm('Delete this person?')) { setFriends(friends.filter(f => f.id !== viewingFriend.id)); setCurrentView('home'); setViewingFriendId(null); } }} className="w-full px-4 py-2.5 text-sm text-left hover:bg-red-50 dark:hover:bg-red-950/50 text-red-600 dark:text-red-400 flex items-center gap-2"><Trash2 size={14} />Delete</button>
                           </SmartDropdown>
                         </div>
                       );
@@ -556,7 +557,7 @@ export default function UnGhost() {
                 {/* Tabs */}
                 <div className="bg-white dark:bg-gray-800 border rounded-md overflow-hidden">
                   <div className="flex border-b border-gray-200 dark:border-gray-700">
-                    {[['profile', 'Profile'], ['reminders', 'Reminders'], ['events', 'Events']].map(([tab, label]) => (
+                    {[['profile', 'Profile'], ['reminders', 'Check-ins'], ['events', 'Events']].map(([tab, label]) => (
                       <button key={tab} onClick={() => setDetailTab(tab)} className={`px-5 py-3 text-sm font-medium border-b-2 transition-colors ${detailTab === tab ? 'border-gray-900 dark:border-gray-300 text-gray-900 dark:text-gray-50' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700'}`}>
                         {label}
                         {tab === 'reminders' && viewingFriend.reminders?.length > 0 && <span className="ml-1.5 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded-full">{viewingFriend.reminders.length}</span>}
@@ -611,8 +612,8 @@ export default function UnGhost() {
                     {detailTab === 'reminders' && (
                       <div>
                         <div className="flex items-center justify-between mb-4">
-                          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Upcoming Reminders</p>
-                          <button onClick={() => { setModalType('reminder'); setShowCheckInModal(true); }} className="px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300 hover:text-gray-900 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-md flex items-center gap-1.5"><Plus size={14} />Add Reminder</button>
+                          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Upcoming Check-ins</p>
+                          <button onClick={() => { setModalType('reminder'); setShowCheckInModal(true); }} className="px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300 hover:text-gray-900 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-md flex items-center gap-1.5"><Plus size={14} />Add Check-in</button>
                         </div>
                         {viewingFriend.reminders && viewingFriend.reminders.length > 0 ? (
                           <div className="space-y-2">
@@ -629,14 +630,16 @@ export default function UnGhost() {
                                         {reminder.isRecurring && <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">Repeats every {reminder.recurringPeriod} days</span>}
                                       </div>
                                     </div>
-                                    <div className="relative flex-shrink-0">
-                                      <button onClick={(e) => { setReminderMenuRect(e.currentTarget.getBoundingClientRect()); setReminderMenuOpen(reminderMenuOpen === reminder.id ? null : reminder.id); }} className="p-1.5 text-gray-400 dark:text-gray-500 hover:text-gray-900 rounded border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700"><MoreVertical size={15} /></button>
-                                      <SmartDropdown anchorRect={reminderMenuRect} open={reminderMenuOpen === reminder.id} onClose={() => setReminderMenuOpen(null)}>
-                                        <button onClick={() => { completeReminder(viewingFriend.id, reminder.id); setReminderMenuOpen(null); }} className="w-full px-4 py-2.5 text-sm text-left text-gray-900 dark:text-gray-50 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"><Check size={14} className="text-green-600" />Mark complete</button>
-                                        <button onClick={() => { snoozeReminder(viewingFriend.id, reminder.id, 1); setReminderMenuOpen(null); }} className="w-full px-4 py-2.5 text-sm text-left text-gray-900 dark:text-gray-50 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"><Bell size={14} className="text-gray-400 dark:text-gray-500" />Snooze 1 day</button>
-                                        <button onClick={() => { setEditingReminder(reminder); setModalType('reminder'); setCheckInTitle(reminder.title); setCheckInDate(toLocalDateStr(parseLocalDate(reminder.date))); setIsRecurring(reminder.isRecurring || false); setRecurringPeriod(reminder.recurringPeriod || 7); setShowCheckInModal(true); setReminderMenuOpen(null); }} className="w-full px-4 py-2.5 text-sm text-left text-gray-900 dark:text-gray-50 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"><Edit2 size={14} className="text-gray-400 dark:text-gray-500" />Edit</button>
-                                        <button onClick={() => { deleteReminder(viewingFriend.id, reminder.id); setReminderMenuOpen(null); }} className="w-full px-4 py-2.5 text-sm text-left hover:bg-red-50 text-red-600 flex items-center gap-2 border-t border-gray-100 dark:border-gray-800"><Trash2 size={14} />Delete</button>
-                                      </SmartDropdown>
+                                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                                      <button onClick={() => completeReminder(viewingFriend.id, reminder.id)} title="Mark complete" className="p-1.5 text-green-600 dark:text-green-400 bg-white dark:bg-gray-800 hover:bg-green-50 dark:hover:bg-green-900/40 rounded border border-gray-200 dark:border-gray-700"><Check size={15} /></button>
+                                      <button onClick={() => snoozeReminder(viewingFriend.id, reminder.id, 1)} title="Snooze 1 day" className="p-1.5 text-gray-400 dark:text-gray-500 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 rounded border border-gray-200 dark:border-gray-700"><Bell size={15} /></button>
+                                      <div className="relative">
+                                        <button onClick={(e) => { setReminderMenuRect(e.currentTarget.getBoundingClientRect()); setReminderMenuOpen(reminderMenuOpen === reminder.id ? null : reminder.id); }} className="p-1.5 text-gray-400 dark:text-gray-500 bg-white dark:bg-gray-800 hover:text-gray-900 rounded border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700"><MoreVertical size={15} /></button>
+                                        <SmartDropdown anchorRect={reminderMenuRect} open={reminderMenuOpen === reminder.id} onClose={() => setReminderMenuOpen(null)}>
+                                          <button onClick={() => { setEditingReminder(reminder); setModalType('reminder'); setCheckInTitle(reminder.title); setCheckInDate(toLocalDateStr(parseLocalDate(reminder.date))); setIsRecurring(reminder.isRecurring || false); setRecurringPeriod(reminder.recurringPeriod || 7); setShowCheckInModal(true); setReminderMenuOpen(null); }} className="w-full px-4 py-2.5 text-sm text-left text-gray-900 dark:text-gray-50 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"><Edit2 size={14} className="text-gray-400 dark:text-gray-500" />Edit</button>
+                                          <button onClick={() => { deleteReminder(viewingFriend.id, reminder.id); setReminderMenuOpen(null); }} className="w-full px-4 py-2.5 text-sm text-left hover:bg-red-50 dark:hover:bg-red-950/50 text-red-600 dark:text-red-400 flex items-center gap-2 border-t border-gray-100 dark:border-gray-800"><Trash2 size={14} />Delete</button>
+                                        </SmartDropdown>
+                                      </div>
                                     </div>
                                   </div>
                                 </div>
@@ -644,7 +647,7 @@ export default function UnGhost() {
                             })}
                           </div>
                         ) : (
-                          <div className="text-center py-8"><div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-2"><Bell size={20} className="text-gray-400 dark:text-gray-500" /></div><p className="text-sm font-medium text-gray-900 dark:text-gray-50 mb-0.5">No reminders</p><p className="text-xs text-gray-500 dark:text-gray-400">Add a reminder to stay in touch</p></div>
+                          <div className="text-center py-8"><div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-2"><Bell size={20} className="text-gray-400 dark:text-gray-500" /></div><p className="text-sm font-medium text-gray-900 dark:text-gray-50 mb-0.5">No check-ins</p><p className="text-xs text-gray-500 dark:text-gray-400">Add a check-in to stay in touch</p></div>
                         )}
                       </div>
                     )}
@@ -667,13 +670,13 @@ export default function UnGhost() {
                                     <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{(() => { const rel = getRelativeDateLabel(eventDate); const fmt = eventDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }); return rel ? `${rel} · ${fmt}` : fmt; })()}</p>
                                     {event.taggedFriendIds && event.taggedFriendIds.length > 1 && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">with {event.taggedFriendIds.filter(id => id !== viewingFriend.id).map(id => friends.find(f => f.id === id)?.name).filter(Boolean).join(', ')}</p>}
                                     {event.note && <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{event.note}</p>}
-                                    {event.type === 'reminder_completed' && <span className="inline-block text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded mt-1">From reminder</span>}
+                                    {event.type === 'reminder_completed' && <span className="inline-block text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded mt-1">From check-in</span>}
                                   </div>
                                   <div className="relative flex-shrink-0">
                                     <button onClick={(e) => { setEventMenuRect(e.currentTarget.getBoundingClientRect()); setEventMenuOpen(eventMenuOpen === event.id ? null : event.id); }} className="p-1.5 text-gray-400 dark:text-gray-500 hover:text-gray-900 rounded border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 opacity-0 group-hover:opacity-100 transition-opacity"><MoreVertical size={15} /></button>
                                     <SmartDropdown anchorRect={eventMenuRect} open={eventMenuOpen === event.id} onClose={() => setEventMenuOpen(null)}>
                                       <button onClick={() => { setEditingCheckIn({ id: event.id, title: event.title || 'Event', note: event.note || '', date: toLocalDateStr(parseLocalDate(event.date)), taggedFriendIds: event.taggedFriendIds || [viewingFriend.id] }); setShowEditCheckInModal(true); setEventMenuOpen(null); }} className="w-full px-4 py-2.5 text-sm text-left text-gray-900 dark:text-gray-50 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"><Edit2 size={14} className="text-gray-400 dark:text-gray-500" />Edit</button>
-                                      <button onClick={() => { if (confirm('Delete this event?')) { deleteEvent(viewingFriend.id, event.id); setEventMenuOpen(null); } }} className="w-full px-4 py-2.5 text-sm text-left hover:bg-red-50 text-red-600 flex items-center gap-2 border-t border-gray-100 dark:border-gray-800"><Trash2 size={14} />Delete</button>
+                                      <button onClick={() => { if (confirm('Delete this event?')) { deleteEvent(viewingFriend.id, event.id); setEventMenuOpen(null); } }} className="w-full px-4 py-2.5 text-sm text-left hover:bg-red-50 dark:hover:bg-red-950/50 text-red-600 dark:text-red-400 flex items-center gap-2 border-t border-gray-100 dark:border-gray-800"><Trash2 size={14} />Delete</button>
                                     </SmartDropdown>
                                   </div>
                                 </div>
@@ -695,10 +698,10 @@ export default function UnGhost() {
           {currentView === 'home' && currentPage === 'dashboard' && (
             <div>
               {friends.length === 0 ? (
-                <div className="bg-white dark:bg-gray-800 border rounded-md p-12 text-center h-[400px]">
+                <div className="bg-white dark:bg-gray-800 border rounded-md p-12 text-center">
                   <h2 className="text-xl font-semibold mb-2">Welcome to UnGhost!</h2>
-                  <p className="text-gray-600 dark:text-gray-400 mb-6">Track your friendships</p>
-                  <button onClick={() => setShowAddFriendModal(true)} className="px-6 py-3 bg-gray-900 dark:bg-gray-700 text-white rounded-md hover:bg-gray-800 dark:hover:bg-gray-600 inline-flex items-center gap-2 text-sm"><UserPlus size={20} />Add Your First Friend</button>
+                  <p className="text-gray-600 dark:text-gray-400 mb-6">Track your relationships</p>
+                  <button onClick={() => setShowAddFriendModal(true)} className="px-6 py-3 bg-gray-900 dark:bg-gray-700 text-white rounded-md hover:bg-gray-800 dark:hover:bg-gray-600 inline-flex items-center gap-2 text-sm"><UserPlus size={20} />Add Your First Person</button>
                 </div>
               ) : (() => {
                 const today = new Date(); today.setHours(0,0,0,0);
@@ -737,7 +740,7 @@ export default function UnGhost() {
                 }).filter(f => f.daysUntil <= 30).sort((a,b) => a.daysUntil - b.daysUntil);
 
                 const ReminderRow = ({ reminder, badge, badgeColor }) => (
-                  <div className="flex items-center justify-between py-3 px-2 -mx-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-md cursor-pointer transition-colors" onClick={() => { setViewingFriendId(reminder.friend.id); setCurrentView('detail'); setDetailTab('reminders'); }}>
+                  <div className="flex items-center justify-between py-3 px-2 -mx-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-md cursor-pointer transition-colors" onClick={() => { setViewingFriendId(reminder.friend.id); setCurrentView('detail'); setCurrentPage('friends'); setDetailTab('reminders'); }}>
                     <div className="flex items-center gap-3">
                       {reminder.friend.profilePicture ? <img src={reminder.friend.profilePicture} alt={reminder.friend.name} className="w-9 h-9 rounded-full object-cover flex-shrink-0" /> : <div className={`w-9 h-9 rounded-full ${getProfileColor(reminder.friend.name)} text-white flex items-center justify-center text-sm font-medium flex-shrink-0`}>{getInitials(reminder.friend.name)}</div>}
                       <div>
@@ -764,44 +767,100 @@ export default function UnGhost() {
                 );
 
                 return (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Reminders - full width */}
+                  <div className="flex flex-col gap-4">
+                    {/* This Week — combined reminders + birthdays */}
                     <div className="bg-white dark:bg-gray-800 border rounded-md overflow-hidden">
                       <div className="px-4 pt-4 pb-3 border-b border-gray-100 dark:border-gray-800">
-                        <h3 className="text-sm font-medium text-gray-900 dark:text-gray-50">Reminders</h3>
+                        <h3 className="text-sm font-medium text-gray-900 dark:text-gray-50">This Week</h3>
                       </div>
                       <div className="p-4">
-                        {overdue.length === 0 && dueThisWeek.length === 0 && dueThisMonth.length === 0 ? (
-                          <p className="text-sm text-gray-400 dark:text-gray-500 py-2">You're all caught up! 🎉</p>
-                        ) : (
-                          <div className="space-y-1 divide-y dark:divide-gray-700">
-                            <ReminderSection
-                              label="Overdue" labelColor="text-red-500"
-                              reminders={overdue}
-                              renderBadge={r => {
-                                const d = parseLocalDate(r.date); d.setHours(0,0,0,0);
-                                return { badge: `${Math.round((today-d)/(1000*60*60*24))}d overdue`, badgeColor: 'bg-red-50 text-red-500' };
-                              }}
-                            />
-                            <ReminderSection
-                              label="Next 7 days" labelColor="text-gray-400 dark:text-gray-500"
-                              reminders={dueThisWeek}
-                              renderBadge={r => {
-                                const d = parseLocalDate(r.date); d.setHours(0,0,0,0);
-                                const isToday = d.toDateString() === today.toDateString();
-                                return { badge: isToday ? 'Today' : d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }), badgeColor: isToday ? 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400' };
-                              }}
-                            />
-                            <ReminderSection
-                              label="This month" labelColor="text-gray-400 dark:text-gray-500"
-                              reminders={dueThisMonth}
-                              renderBadge={r => {
-                                const d = parseLocalDate(r.date); d.setHours(0,0,0,0);
-                                return { badge: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }), badgeColor: 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400' };
-                              }}
-                            />
-                          </div>
-                        )}
+                        {(() => {
+                          const weekEnd = new Date(today.getTime() + 7*24*60*60*1000);
+
+                          const reminderItems = friends.flatMap(f => (f.reminders||[]).map(r => {
+                            const d = parseLocalDate(r.date); d.setHours(0,0,0,0);
+                            return { type: 'reminder', sortDate: d, title: r.title, friend: f, id: r.id };
+                          })).filter(item => item.sortDate <= weekEnd)
+                            .sort((a,b) => a.sortDate - b.sortDate);
+
+                          const birthdayItems = upcomingBirthdays.filter(f => f.daysUntil <= 7).map(f => ({
+                            type: 'birthday',
+                            sortDate: f.nextBirthday,
+                            title: 'Birthday',
+                            friend: f,
+                            id: `bday-${f.id}`
+                          }));
+
+                          const seenEventIds = new Set();
+                          const eventItems = friends.flatMap(f => (f.eventLog||[])
+                            .filter(e => e.type !== 'system' && e.type !== 'reminder_completed')
+                            .map(e => ({ ...e, friend: f }))
+                          ).filter(e => {
+                            if (seenEventIds.has(e.id)) return false;
+                            seenEventIds.add(e.id);
+                            const d = parseLocalDate(e.date); d.setHours(0,0,0,0);
+                            return d >= today && d <= weekEnd;
+                          }).map(e => {
+                            const d = parseLocalDate(e.date); d.setHours(0,0,0,0);
+                            return { type: 'event', sortDate: d, title: e.title || 'Event', friend: e.friend, id: e.id };
+                          });
+
+                          const allItems = [...reminderItems, ...birthdayItems, ...eventItems].sort((a,b) => a.sortDate - b.sortDate);
+
+                          if (allItems.length === 0) return <p className="text-sm text-gray-400 dark:text-gray-500 py-2">Nothing due this week! 🎉</p>;
+
+                          const overdueItems = allItems.filter(item => item.sortDate < today && item.type === 'reminder');
+                          const todayItems = allItems.filter(item => item.sortDate.toDateString() === today.toDateString());
+                          const upcomingItems = allItems.filter(item => item.sortDate > today && item.sortDate.toDateString() !== today.toDateString());
+
+                          const ItemRow = ({ item }) => (
+                            <div
+                              className="flex items-center justify-between py-3 px-2 -mx-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-md cursor-pointer transition-colors"
+                              onClick={() => { setViewingFriendId(item.friend.id); setCurrentView('detail'); setCurrentPage('friends'); setDetailTab(item.type === 'reminder' ? 'reminders' : item.type === 'event' ? 'events' : 'profile'); }}
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${item.type === 'reminder' ? 'bg-green-50 dark:bg-green-900/30' : 'bg-blue-50 dark:bg-blue-900/30'}`}>
+                                  {item.type === 'reminder'
+                                    ? <CheckCircle size={17} className="text-green-500 dark:text-green-400" />
+                                    : <Calendar size={17} className="text-blue-500 dark:text-blue-400" />
+                                  }
+                                </div>
+                                <div>
+                                  <p className="text-sm font-medium text-gray-900 dark:text-gray-50">{item.title}</p>
+                                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{item.friend.name}</p>
+                                </div>
+                              </div>
+                              <div>
+                                {item.type === 'reminder' && item.sortDate < today && (
+                                  <span className="text-xs font-medium px-2 py-1 rounded-full bg-red-50 text-red-500">{Math.round((today - item.sortDate)/(1000*60*60*24))}d overdue</span>
+                                )}
+                                {item.sortDate.toDateString() === today.toDateString() && (
+                                  <span className="text-xs font-medium px-2 py-1 rounded-full bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300">Today</span>
+                                )}
+                                {item.sortDate > today && item.sortDate.toDateString() !== today.toDateString() && (
+                                  <span className="text-xs font-medium px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">{item.sortDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</span>
+                                )}
+                              </div>
+                            </div>
+                          );
+
+                          const Section = ({ label, labelColor, items }) => items.length === 0 ? null : (
+                            <div className="py-4 first:pt-0 last:pb-0">
+                              <p className={`text-xs font-medium uppercase tracking-wide mb-3 ${labelColor}`}>{label}</p>
+                              <div className="divide-y dark:divide-gray-700">
+                                {items.map(item => <ItemRow key={item.id} item={item} />)}
+                              </div>
+                            </div>
+                          );
+
+                          return (
+                            <div className="divide-y dark:divide-gray-700">
+                              <Section label="Overdue" labelColor="text-red-500" items={overdueItems} />
+                              <Section label="Today" labelColor="text-green-600 dark:text-green-400" items={todayItems} />
+                              <Section label="Coming up" labelColor="text-gray-400 dark:text-gray-500" items={upcomingItems} />
+                            </div>
+                          );
+                        })()}
                       </div>
                     </div>
 
@@ -822,7 +881,7 @@ export default function UnGhost() {
                               {recentEvents.map(event => {
                                 const d = parseLocalDate(event.date);
                                 return (
-                                  <div key={event.id} className="bg-white dark:bg-gray-800 border rounded-md p-4 hover:border-gray-300 transition-colors cursor-pointer" onClick={() => { setViewingFriendId(event.friend.id); setCurrentView('detail'); setDetailTab('events'); }}>
+                                  <div key={event.id} className="bg-white dark:bg-gray-800 border rounded-md p-4 hover:border-gray-300 transition-colors cursor-pointer" onClick={() => { setViewingFriendId(event.friend.id); setCurrentView('detail'); setCurrentPage('friends'); setDetailTab('events'); }}>
                                     <div className="flex items-start justify-between gap-3">
                                       <div className="flex-1 min-w-0">
                                         <p className="text-sm font-medium text-gray-900 dark:text-gray-50">{event.title || 'Event'}</p>
@@ -851,7 +910,7 @@ export default function UnGhost() {
           {currentView === 'home' && currentPage === 'friends' && (
             <div>
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-50">Friends</h2>
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-50">People</h2>
                 <div className="flex items-center gap-2">
                   <div className="relative">
                     <div className="relative" ref={importExportRef}>
@@ -889,7 +948,7 @@ export default function UnGhost() {
                     <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none" />
                     <input
                       type="text"
-                      placeholder="Search friends..."
+                      placeholder="Search people..."
                       value={friendsSearch}
                       onChange={e => setFriendsSearch(e.target.value)}
                       className="w-full pl-8 pr-3 py-2 text-sm text-gray-900 dark:text-gray-50 placeholder-gray-400 dark:placeholder-gray-500 border border-gray-200 dark:border-gray-700 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900 bg-white dark:bg-gray-800"
@@ -900,7 +959,7 @@ export default function UnGhost() {
               )}
 
               {filteredFriends.length === 0 ? (
-                <div className="bg-white dark:bg-gray-800 border rounded-md p-12 text-center"><p className="text-gray-600 dark:text-gray-400 mb-4">No friends yet</p><button onClick={() => setShowAddFriendModal(true)} className="px-6 py-2 bg-gray-900 dark:bg-gray-700 text-white rounded-md hover:bg-gray-800 dark:hover:bg-gray-600 text-sm">Add Friend</button></div>
+                <div className="bg-white dark:bg-gray-800 border rounded-md p-12 text-center"><p className="text-gray-600 dark:text-gray-400 mb-4">No people yet</p><button onClick={() => setShowAddFriendModal(true)} className="px-6 py-2 bg-gray-900 dark:bg-gray-700 text-white rounded-md hover:bg-gray-800 dark:hover:bg-gray-600 text-sm">Add Person</button></div>
               ) : (
                 <div className="bg-white dark:bg-gray-800 border rounded-md overflow-visible">
                   <div className="border-b bg-gray-50 dark:bg-gray-900">
@@ -910,10 +969,10 @@ export default function UnGhost() {
                       </div>
                       <div className="w-1/4 pr-6">Groups</div>
                       <div className="w-1/4 pr-6">
-                        <button onClick={() => { if (friendsSortBy==='lastContacted') setFriendsSortOrder(friendsSortOrder==='asc'?'desc':'asc'); else { setFriendsSortBy('lastContacted'); setFriendsSortOrder('desc'); } }} className="flex items-center gap-1 -mx-2 px-2 py-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600 hover:text-gray-900 transition-colors">Last Contacted{friendsSortBy==='lastContacted'&&(friendsSortOrder==='asc'?<ArrowUp size={12}/>:<ArrowDown size={12}/>)}</button>
+                        <button onClick={() => { if (friendsSortBy==='lastContacted') setFriendsSortOrder(friendsSortOrder==='asc'?'desc':'asc'); else { setFriendsSortBy('lastContacted'); setFriendsSortOrder('desc'); } }} className="flex items-center gap-1 -mx-2 px-2 py-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600 hover:text-gray-900 transition-colors">Last Checked In{friendsSortBy==='lastContacted'&&(friendsSortOrder==='asc'?<ArrowUp size={12}/>:<ArrowDown size={12}/>)}</button>
                       </div>
                       <div className="w-1/4">
-                        <button onClick={() => { if (friendsSortBy==='nextReminder') setFriendsSortOrder(friendsSortOrder==='asc'?'desc':'asc'); else { setFriendsSortBy('nextReminder'); setFriendsSortOrder('asc'); } }} className="flex items-center gap-1 -mx-2 px-2 py-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600 hover:text-gray-900 transition-colors">Next Reminder{friendsSortBy==='nextReminder'&&(friendsSortOrder==='asc'?<ArrowUp size={12}/>:<ArrowDown size={12}/>)}</button>
+                        <button onClick={() => { if (friendsSortBy==='nextReminder') setFriendsSortOrder(friendsSortOrder==='asc'?'desc':'asc'); else { setFriendsSortBy('nextReminder'); setFriendsSortOrder('asc'); } }} className="flex items-center gap-1 -mx-2 px-2 py-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600 hover:text-gray-900 transition-colors">Next Check-in{friendsSortBy==='nextReminder'&&(friendsSortOrder==='asc'?<ArrowUp size={12}/>:<ArrowDown size={12}/>)}</button>
                       </div>
                     </div>
                   </div>
@@ -963,7 +1022,7 @@ export default function UnGhost() {
                 <div className="bg-white dark:bg-gray-800 border rounded-md p-12 text-center">
                   <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4"><Network size={32} className="text-gray-400 dark:text-gray-500" /></div>
                   <h3 className="text-lg font-semibold mb-2">No groups yet</h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">Create groups like "Family", "Work", or "College Friends" to organize your contacts.</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">Create groups like "Family", "Work", or "College People" to organize your contacts.</p>
                   <button onClick={() => setShowGroupModal(true)} className="px-6 py-2.5 bg-gray-900 dark:bg-gray-700 text-white rounded-md hover:bg-gray-800 dark:hover:bg-gray-600 inline-flex items-center gap-2 text-sm"><Plus size={18} />Create Your First Group</button>
                 </div>
               ) : (
@@ -1018,7 +1077,7 @@ export default function UnGhost() {
                               <button onClick={(e) => { setGroupActionsRect(e.currentTarget.getBoundingClientRect()); setGroupActionsOpen(groupActionsOpen === group.id ? null : group.id); }} className="p-1.5 text-gray-400 dark:text-gray-500 hover:text-gray-900 rounded border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700"><MoreVertical size={16} /></button>
                               <SmartDropdown anchorRect={groupActionsRect} open={groupActionsOpen === group.id} onClose={() => setGroupActionsOpen(null)}>
                                 <button onClick={() => { setEditingGroup(group); setShowEditGroupModal(true); setGroupActionsOpen(null); setGroupMemberSearch(''); }} className="w-full px-4 py-2.5 text-sm text-left text-gray-900 dark:text-gray-50 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"><Edit2 size={14} className="text-gray-400 dark:text-gray-500" />Edit</button>
-                                <button onClick={() => { setGroupActionsOpen(null); if (confirm(`Delete group "${group.name}"? Friends will remain but lose this group tag.`)) { setGroups(groups.filter(g=>g.id!==group.id)); setFriends(friends.map(f=>({...f,groups:f.groups?.filter(gId=>gId!==group.id)||[]}))); } }} className="w-full px-4 py-2.5 text-sm text-left hover:bg-red-50 text-red-600 flex items-center gap-2"><Trash2 size={14} />Delete</button>
+                                <button onClick={() => { setGroupActionsOpen(null); if (confirm(`Delete group "${group.name}"? People will remain but lose this group tag.`)) { setGroups(groups.filter(g=>g.id!==group.id)); setFriends(friends.map(f=>({...f,groups:f.groups?.filter(gId=>gId!==group.id)||[]}))); } }} className="w-full px-4 py-2.5 text-sm text-left hover:bg-red-50 dark:hover:bg-red-950/50 text-red-600 dark:text-red-400 flex items-center gap-2"><Trash2 size={14} />Delete</button>
                               </SmartDropdown>
                             </div>
                           </div>
@@ -1044,12 +1103,12 @@ export default function UnGhost() {
                 <div className="relative">
                   <button onClick={(e) => { setEventsFriendFilterRect(e.currentTarget.getBoundingClientRect()); setShowEventsFriendFilter(!showEventsFriendFilter); setShowEventsDateFilter(false); }} className={`px-3 py-1.5 border rounded-md text-sm flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700 ${eventsFriendFilter !== 'all' ? 'border-gray-900 bg-gray-900 dark:bg-gray-700 text-white hover:bg-gray-800 dark:hover:bg-gray-600' : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300'}`}>
                     <UserCircle size={14} />
-                    {eventsFriendFilter === 'all' ? 'All Friends' : friends.find(f => f.id === eventsFriendFilter)?.name || 'All Friends'}
+                    {eventsFriendFilter === 'all' ? 'All People' : friends.find(f => f.id === eventsFriendFilter)?.name || 'All People'}
                     <ChevronDown size={13} className={eventsFriendFilter !== 'all' ? 'text-white' : 'text-gray-400 dark:text-gray-500'} />
                   </button>
                   <SmartDropdown anchorRect={eventsFriendFilterRect} open={showEventsFriendFilter} onClose={() => setShowEventsFriendFilter(false)}>
                     <div className="max-h-64 overflow-y-auto w-48">
-                      <button onClick={() => { setEventsFriendFilter('all'); setShowEventsFriendFilter(false); }} className={`w-full px-4 py-2.5 text-sm text-left text-gray-900 dark:text-gray-50 hover:bg-gray-50 dark:hover:bg-gray-700 ${eventsFriendFilter === 'all' ? 'bg-gray-50 dark:bg-gray-900 font-medium' : ''}`}>All Friends</button>
+                      <button onClick={() => { setEventsFriendFilter('all'); setShowEventsFriendFilter(false); }} className={`w-full px-4 py-2.5 text-sm text-left text-gray-900 dark:text-gray-50 hover:bg-gray-50 dark:hover:bg-gray-700 ${eventsFriendFilter === 'all' ? 'bg-gray-50 dark:bg-gray-900 font-medium' : ''}`}>All People</button>
                       <div className="border-t border-gray-100 dark:border-gray-800">
                         {[...friends].sort((a,b) => a.name.localeCompare(b.name)).map(f => (
                           <button key={f.id} onClick={() => { setEventsFriendFilter(f.id); setShowEventsFriendFilter(false); }} className={`w-full px-4 py-2.5 text-sm text-left hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2 ${eventsFriendFilter === f.id ? 'bg-gray-50 dark:bg-gray-900 font-medium' : ''}`}>
@@ -1152,14 +1211,14 @@ export default function UnGhost() {
                                       ))}
                                     </div>
                                     {event.note && <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{event.note}</p>}
-                                    {event.type === 'reminder_completed' && <span className="inline-block text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded mt-1">From reminder</span>}
+                                    {event.type === 'reminder_completed' && <span className="inline-block text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded mt-1">From check-in</span>}
                                   </div>
                                   <div className="flex items-center gap-2 flex-shrink-0">
                                     <div className="relative">
                                       <button onClick={(e) => { setEventActionsRect(e.currentTarget.getBoundingClientRect()); setEventActionsOpen(eventActionsOpen === event.id ? null : event.id); }} className="p-1.5 text-gray-400 dark:text-gray-500 hover:text-gray-600 rounded border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700"><MoreVertical size={14} /></button>
                                       <SmartDropdown anchorRect={eventActionsRect} open={eventActionsOpen === event.id} onClose={() => setEventActionsOpen(null)}>
                                         <button onClick={() => { setEditingCheckIn({ ...event, friendId: event.friend.id }); setShowEditCheckInModal(true); setEventActionsOpen(null); }} className="w-full px-4 py-2.5 text-sm text-left text-gray-900 dark:text-gray-50 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"><Edit2 size={14} className="text-gray-400 dark:text-gray-500" />Edit</button>
-                                        <button onClick={() => { setEventActionsOpen(null); if (confirm('Delete this event?')) { event.involvedFriends.forEach(f => deleteEvent(f.id, event.id)); } }} className="w-full px-4 py-2.5 text-sm text-left hover:bg-red-50 text-red-600 flex items-center gap-2"><Trash2 size={14} />Delete</button>
+                                        <button onClick={() => { setEventActionsOpen(null); if (confirm('Delete this event?')) { event.involvedFriends.forEach(f => deleteEvent(f.id, event.id)); } }} className="w-full px-4 py-2.5 text-sm text-left hover:bg-red-50 dark:hover:bg-red-950/50 text-red-600 dark:text-red-400 flex items-center gap-2"><Trash2 size={14} />Delete</button>
                                       </SmartDropdown>
                                     </div>
                                   </div>
@@ -1193,11 +1252,11 @@ export default function UnGhost() {
                 <input type="text" placeholder="What did you do?" value={globalLogTitle} onChange={e => setGlobalLogTitle(e.target.value)} className="text-gray-900 dark:text-gray-50 placeholder-gray-400 dark:placeholder-gray-500 w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-md" autoFocus />
               </div>
               <div>
-                <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1.5">Friends</label>
+                <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1.5">People</label>
                 <div className="relative">
                   <input
                     type="text"
-                    placeholder="Search friends..."
+                    placeholder="Search people..."
                     value={globalLogSearch}
                     onChange={e => setGlobalLogSearch(e.target.value)}
                     className="text-gray-900 dark:text-gray-50 placeholder-gray-400 dark:placeholder-gray-500 w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-md"
@@ -1208,14 +1267,14 @@ export default function UnGhost() {
                         f.name.toLowerCase().includes(globalLogSearch.toLowerCase()) &&
                         !globalLogFriends.includes(f.id)
                       ).sort((a,b) => a.name.localeCompare(b.name)).length === 0
-                        ? <p className="px-3 py-2 text-sm text-gray-400 dark:text-gray-500">No friends found</p>
+                        ? <p className="px-3 py-2 text-sm text-gray-400 dark:text-gray-500">No people found</p>
                         : friends.filter(f =>
                             f.name.toLowerCase().includes(globalLogSearch.toLowerCase()) &&
                             !globalLogFriends.includes(f.id)
                           ).sort((a,b) => a.name.localeCompare(b.name)).map(friend => (
                           <button key={friend.id} onClick={() => { setGlobalLogFriends([...globalLogFriends, friend.id]); setGlobalLogSearch(''); }} className="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 text-left">
                             {friend.profilePicture ? <img src={friend.profilePicture} alt={friend.name} className="w-6 h-6 rounded-full object-cover flex-shrink-0" /> : <div className={`w-6 h-6 rounded-full ${getProfileColor(friend.name)} text-white flex items-center justify-center text-[10px] font-medium flex-shrink-0`}>{getInitials(friend.name)}</div>}
-                            <span className="text-sm">{friend.name}</span>
+                            <span className="text-sm text-gray-900 dark:text-gray-50">{friend.name}</span>
                           </button>
                         ))
                       }
@@ -1290,7 +1349,7 @@ export default function UnGhost() {
                     <div className="flex flex-wrap gap-1 flex-1">{!editedFriend.groups || editedFriend.groups.length === 0 ? <span className="text-gray-500 dark:text-gray-400">None</span> : editedFriend.groups.map(groupId => { const group = getGroupById(groupId); if (!group) return null; return <span key={groupId} className="text-xs px-2 py-0.5 rounded flex items-center gap-1" style={{ backgroundColor: group.color + '20', color: group.color }}><span className="text-[10px]">{group.icon}</span><span>{group.name}</span></span>; })}</div>
                     <ChevronDown size={16} className="text-gray-400 dark:text-gray-500 flex-shrink-0 ml-2" />
                   </button>
-                  {showEditGroupDropdown && (<><div className="fixed inset-0 z-10" onClick={() => setShowEditGroupDropdown(false)} /><div className="absolute z-20 w-full mt-1 bg-white dark:bg-gray-800 border rounded-md shadow-lg max-h-48 overflow-y-auto">{groups.length === 0 ? <div className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">No groups yet.</div> : [...groups].sort((a,b)=>a.name.localeCompare(b.name)).map(group => <label key={group.id} className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"><input type="checkbox" checked={editedFriend.groups && editedFriend.groups.includes(group.id)} onChange={(e) => { const cur = editedFriend.groups || []; setEditedFriend({ ...editedFriend, groups: e.target.checked ? [...cur, group.id] : cur.filter(gr => gr !== group.id) }); }} className="rounded" /><span className="text-sm flex items-center gap-2"><span style={{ color: group.color }}>{group.icon}</span><span>{group.name}</span></span></label>)}</div></>)}
+                  {showEditGroupDropdown && (<><div className="fixed inset-0 z-10" onClick={() => setShowEditGroupDropdown(false)} /><div className="absolute z-20 w-full mt-1 bg-white dark:bg-gray-800 border rounded-md shadow-lg max-h-48 overflow-y-auto">{groups.length === 0 ? <div className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">No groups yet.</div> : [...groups].sort((a,b)=>a.name.localeCompare(b.name)).map(group => <label key={group.id} className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"><input type="checkbox" checked={editedFriend.groups && editedFriend.groups.includes(group.id)} onChange={(e) => { const cur = editedFriend.groups || []; setEditedFriend({ ...editedFriend, groups: e.target.checked ? [...cur, group.id] : cur.filter(gr => gr !== group.id) }); }} className="rounded" /><span className="text-sm flex items-center gap-2 text-gray-900 dark:text-gray-50"><span style={{ color: group.color }}>{group.icon}</span><span>{group.name}</span></span></label>)}</div></>)}
                 </div>
               </div>
               <div>
@@ -1327,7 +1386,7 @@ export default function UnGhost() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-50">Add Friend</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-50">Add Person</h3>
               <button onClick={() => { setShowAddFriendModal(false); setNewFriend({ firstName: '', lastName: '', frequency: 14, groups: [], phone: '', email: '', birthday: '' }); }} className="text-gray-400 dark:text-gray-500 hover:text-gray-900"><X size={20} /></button>
             </div>
             <div className="space-y-4">
@@ -1354,7 +1413,7 @@ export default function UnGhost() {
                     <div className="flex flex-wrap gap-1 flex-1">{newFriend.groups.length === 0 ? <span className="text-gray-500 dark:text-gray-400">None</span> : newFriend.groups.map(groupId => { const group = getGroupById(groupId); if (!group) return null; return <span key={groupId} className="text-xs px-2 py-0.5 rounded flex items-center gap-1" style={{ backgroundColor: group.color + '20', color: group.color }}><span className="text-[10px]">{group.icon}</span><span>{group.name}</span></span>; })}</div>
                     <ChevronDown size={16} className="text-gray-400 dark:text-gray-500 flex-shrink-0 ml-2" />
                   </button>
-                  {showGroupDropdown && (<><div className="fixed inset-0 z-10" onClick={() => setShowGroupDropdown(false)} /><div className="absolute z-20 w-full mt-1 bg-white dark:bg-gray-800 border rounded-md shadow-lg max-h-48 overflow-y-auto">{groups.length === 0 ? <div className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">No groups yet.</div> : [...groups].sort((a,b)=>a.name.localeCompare(b.name)).map(group => <label key={group.id} className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"><input type="checkbox" checked={newFriend.groups.includes(group.id)} onChange={(e) => { setNewFriend({ ...newFriend, groups: e.target.checked ? [...newFriend.groups, group.id] : newFriend.groups.filter(gr => gr !== group.id) }); }} className="rounded" /><span className="text-sm flex items-center gap-2"><span style={{ color: group.color }}>{group.icon}</span><span>{group.name}</span></span></label>)}</div></>)}
+                  {showGroupDropdown && (<><div className="fixed inset-0 z-10" onClick={() => setShowGroupDropdown(false)} /><div className="absolute z-20 w-full mt-1 bg-white dark:bg-gray-800 border rounded-md shadow-lg max-h-48 overflow-y-auto">{groups.length === 0 ? <div className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">No groups yet.</div> : [...groups].sort((a,b)=>a.name.localeCompare(b.name)).map(group => <label key={group.id} className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"><input type="checkbox" checked={newFriend.groups.includes(group.id)} onChange={(e) => { setNewFriend({ ...newFriend, groups: e.target.checked ? [...newFriend.groups, group.id] : newFriend.groups.filter(gr => gr !== group.id) }); }} className="rounded" /><span className="text-sm flex items-center gap-2 text-gray-900 dark:text-gray-50"><span style={{ color: group.color }}>{group.icon}</span><span>{group.name}</span></span></label>)}</div></>)}
                 </div>
               </div>
               <div>
@@ -1379,7 +1438,7 @@ export default function UnGhost() {
               <div><label className="block text-xs text-gray-600 dark:text-gray-400 mb-1.5">Notes (optional)</label><textarea placeholder="Any notes about this person..." value={newFriend.notes || ''} onChange={(e) => setNewFriend({ ...newFriend, notes: e.target.value })} className="text-gray-900 dark:text-gray-50 placeholder-gray-400 dark:placeholder-gray-500 w-full px-3 py-2 text-sm border rounded-md h-20 resize-none" /></div>
               <div className="flex gap-3">
                 <button onClick={() => { setShowAddFriendModal(false); setNewFriend({ firstName: '', lastName: '', frequency: 14, groups: [], phone: '', email: '', birthday: '' }); }} className="flex-1 px-4 py-2 border rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 text-sm text-gray-700 dark:text-gray-300">Cancel</button>
-                <button onClick={addFriend} disabled={!newFriend.firstName.trim()} className="flex-1 px-4 py-2 bg-gray-900 dark:bg-gray-700 text-white rounded-md hover:bg-gray-800 dark:hover:bg-gray-600 text-sm disabled:opacity-50 text-sm">Add Friend</button>
+                <button onClick={addFriend} disabled={!newFriend.firstName.trim()} className="flex-1 px-4 py-2 bg-gray-900 dark:bg-gray-700 text-white rounded-md hover:bg-gray-800 dark:hover:bg-gray-600 text-sm disabled:opacity-50 text-sm">Add Person</button>
               </div>
             </div>
           </div>
@@ -1392,7 +1451,7 @@ export default function UnGhost() {
           <div className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6">
             <div className="flex items-center justify-between mb-4"><h3 className="text-lg font-semibold text-gray-900 dark:text-gray-50">Add Group</h3><button onClick={() => { setShowGroupModal(false); setNewGroupName(''); setNewGroupDescription(''); setNewGroupColor(''); setNewGroupIcon(''); }} className="text-gray-400 dark:text-gray-500 hover:text-gray-900"><X size={20} /></button></div>
             <div className="space-y-4">
-              <div><label className="block text-xs text-gray-600 dark:text-gray-400 mb-1.5">Name</label><input type="text" placeholder="e.g., Family, Work, College Friends" value={newGroupName} onChange={(e) => setNewGroupName(e.target.value)} className="text-gray-900 dark:text-gray-50 placeholder-gray-400 dark:placeholder-gray-500 w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-md text-sm" autoFocus /></div>
+              <div><label className="block text-xs text-gray-600 dark:text-gray-400 mb-1.5">Name</label><input type="text" placeholder="e.g., Family, Work, College People" value={newGroupName} onChange={(e) => setNewGroupName(e.target.value)} className="text-gray-900 dark:text-gray-50 placeholder-gray-400 dark:placeholder-gray-500 w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-md text-sm" autoFocus /></div>
               <div><label className="block text-xs text-gray-600 dark:text-gray-400 mb-1.5">Description (optional)</label><textarea placeholder="What's this group about?" value={newGroupDescription} onChange={(e) => setNewGroupDescription(e.target.value)} className="text-gray-900 dark:text-gray-50 placeholder-gray-400 dark:placeholder-gray-500 w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-md text-sm h-20 resize-none" /></div>
               <div><label className="block text-xs text-gray-600 dark:text-gray-400 mb-1.5">Icon</label><div className="flex flex-wrap gap-2">{groupIconPresets.map(icon => <button key={icon} type="button" onClick={() => setNewGroupIcon(icon)} className={`w-10 h-10 rounded-md flex items-center justify-center text-xl border-2 ${newGroupIcon===icon?'border-gray-900 bg-gray-50 dark:bg-gray-900':'border-gray-200 dark:border-gray-700 hover:border-gray-300'}`}>{icon}</button>)}</div></div>
               <div><label className="block text-xs text-gray-600 dark:text-gray-400 mb-1.5">Color</label><div className="flex flex-wrap gap-2">{groupColorPresets.map(color => <button key={color} type="button" onClick={() => setNewGroupColor(color)} className={`w-10 h-10 rounded-md border-2 ${newGroupColor===color?'border-gray-900 ring-2 ring-offset-2 ring-gray-200':'border-transparent'}`} style={{ backgroundColor: color }} />)}</div></div>
@@ -1412,7 +1471,7 @@ export default function UnGhost() {
                 <div className="relative">
                   <input
                     type="text"
-                    placeholder="Search friends to add..."
+                    placeholder="Search people to add..."
                     value={groupMemberSearch}
                     onChange={e => setGroupMemberSearch(e.target.value)}
                     className="text-gray-900 dark:text-gray-50 placeholder-gray-400 dark:placeholder-gray-500 w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-md"
@@ -1422,7 +1481,7 @@ export default function UnGhost() {
                       {friends.filter(f => !newGroupMembers.includes(f.id) && f.name.toLowerCase().includes(groupMemberSearch.toLowerCase())).map(f => (
                         <button key={f.id} onClick={() => { setNewGroupMembers([...newGroupMembers, f.id]); setGroupMemberSearch(''); }} className="w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 text-left">
                           <div className={`w-6 h-6 rounded-full ${getProfileColor(f.name)} text-white flex items-center justify-center text-xs font-medium flex-shrink-0`}>{getInitials(f.name)}</div>
-                          <span className="text-sm">{f.name}</span>
+                          <span className="text-sm text-gray-900 dark:text-gray-50">{f.name}</span>
                         </button>
                       ))}
                     </div>
@@ -1475,7 +1534,7 @@ export default function UnGhost() {
                       <div className="relative">
                         <input
                           type="text"
-                          placeholder="Search friends to add..."
+                          placeholder="Search people to add..."
                           value={groupMemberSearch}
                           onChange={e => setGroupMemberSearch(e.target.value)}
                           className="text-gray-900 dark:text-gray-50 placeholder-gray-400 dark:placeholder-gray-500 w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-md"
@@ -1505,24 +1564,53 @@ export default function UnGhost() {
       {showCheckInModal && viewingFriend && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6">
-            <div className="flex items-center justify-between mb-4"><h3 className="text-lg font-semibold text-gray-900 dark:text-gray-50">{modalType==='reminder' ? (editingReminder ? 'Edit Reminder' : 'Add Reminder') : 'Log Event'}</h3><button onClick={() => { setShowCheckInModal(false); setEditingReminder(null); setCheckInTitle(''); setCheckInNote(''); setIsRecurring(false); setRecurringPeriod(7); }} className="text-gray-400 dark:text-gray-500 hover:text-gray-900"><X size={20} /></button></div>
+            <div className="flex items-center justify-between mb-4"><h3 className="text-lg font-semibold text-gray-900 dark:text-gray-50">{modalType==='reminder' ? (editingReminder ? 'Edit Check-in' : 'Add Check-in') : 'Log Event'}</h3><button onClick={() => { setShowCheckInModal(false); setEditingReminder(null); setCheckInTitle(''); setCheckInNote(''); setIsRecurring(false); setRecurringPeriod(7); }} className="text-gray-400 dark:text-gray-500 hover:text-gray-900"><X size={20} /></button></div>
             <div className="space-y-4">
               <div><label className="block text-xs text-gray-600 dark:text-gray-400 mb-1.5">Title</label><input type="text" placeholder={modalType==='reminder'?'e.g., Call about job interview':'e.g., Coffee catch-up, Phone call'} value={checkInTitle} onChange={(e) => setCheckInTitle(e.target.value)} className="text-gray-900 dark:text-gray-50 placeholder-gray-400 dark:placeholder-gray-500 w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-md text-sm" autoFocus /></div>
               <div><label className="block text-xs text-gray-600 dark:text-gray-400 mb-1.5">Date</label><input type="date" value={checkInDate} onChange={(e) => setCheckInDate(e.target.value)} className="text-gray-900 dark:text-gray-50 placeholder-gray-400 dark:placeholder-gray-500 w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-md text-sm" /></div>
-              {modalType==='reminder' && (<><div><label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={isRecurring} onChange={(e) => setIsRecurring(e.target.checked)} className="rounded" /><span className="text-sm text-gray-700 dark:text-gray-300">Recurring reminder</span></label></div>{isRecurring && <div><label className="block text-xs text-gray-600 dark:text-gray-400 mb-1.5">Repeat every</label><select value={recurringPeriod} onChange={(e) => setRecurringPeriod(parseInt(e.target.value))} className="text-gray-900 dark:text-gray-50 placeholder-gray-400 dark:placeholder-gray-500 w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-md text-sm"><option value="7">Week</option><option value="14">2 weeks</option><option value="30">Month</option><option value="60">2 months</option><option value="90">3 months</option></select></div>}</>)}
+              {modalType==='reminder' && (<><div><label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={isRecurring} onChange={(e) => setIsRecurring(e.target.checked)} className="rounded" /><span className="text-sm text-gray-700 dark:text-gray-300">Recurring check-in</span></label></div>{isRecurring && <div><label className="block text-xs text-gray-600 dark:text-gray-400 mb-1.5">Repeat every</label><select value={recurringPeriod} onChange={(e) => setRecurringPeriod(parseInt(e.target.value))} className="text-gray-900 dark:text-gray-50 placeholder-gray-400 dark:placeholder-gray-500 w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-md text-sm"><option value="7">Week</option><option value="14">2 weeks</option><option value="30">Month</option><option value="60">2 months</option><option value="90">3 months</option></select></div>}</>)}
               {modalType==='event' && viewingFriend && (
                 <div>
-                  <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1.5">Tag other friends (optional)</label>
-                  <div className="border rounded-md p-2 max-h-40 overflow-y-auto">
-                    {friends.filter(f=>f.id!==viewingFriend.id).map(friend => <label key={friend.id} className="flex items-center gap-2 py-1.5 px-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded cursor-pointer"><input type="checkbox" checked={taggedFriends.includes(friend.id)} onChange={(e) => { setTaggedFriends(e.target.checked?[...taggedFriends,friend.id]:taggedFriends.filter(id=>id!==friend.id)); }} className="rounded" /><div className="flex items-center gap-2">{friend.profilePicture?<img src={friend.profilePicture} alt={friend.name} className="w-6 h-6 rounded-full object-cover"/>:<div className={`w-6 h-6 rounded-full ${getProfileColor(friend.name)} text-white flex items-center justify-center text-xs font-medium`}>{getInitials(friend.name)}</div>}<span className="text-sm">{friend.name}</span></div></label>)}
+                  <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1.5">Tag other people (optional)</label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="Search people..."
+                      value={taggedFriendsSearch}
+                      onChange={e => setTaggedFriendsSearch(e.target.value)}
+                      className="text-gray-900 dark:text-gray-50 placeholder-gray-400 dark:placeholder-gray-500 w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-md"
+                    />
+                    {taggedFriendsSearch.trim() && (
+                      <div className="absolute z-20 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg max-h-48 overflow-y-auto">
+                        {friends.filter(f => f.id !== viewingFriend.id && f.name.toLowerCase().includes(taggedFriendsSearch.toLowerCase()) && !taggedFriends.includes(f.id)).sort((a,b) => a.name.localeCompare(b.name)).length === 0
+                          ? <p className="px-3 py-2 text-sm text-gray-400 dark:text-gray-500">No people found</p>
+                          : friends.filter(f => f.id !== viewingFriend.id && f.name.toLowerCase().includes(taggedFriendsSearch.toLowerCase()) && !taggedFriends.includes(f.id)).sort((a,b) => a.name.localeCompare(b.name)).map(friend => (
+                            <button key={friend.id} onClick={() => { setTaggedFriends([...taggedFriends, friend.id]); setTaggedFriendsSearch(''); }} className="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 text-left">
+                              {friend.profilePicture ? <img src={friend.profilePicture} alt={friend.name} className="w-6 h-6 rounded-full object-cover flex-shrink-0" /> : <div className={`w-6 h-6 rounded-full ${getProfileColor(friend.name)} text-white flex items-center justify-center text-[10px] font-medium flex-shrink-0`}>{getInitials(friend.name)}</div>}
+                              <span className="text-sm text-gray-900 dark:text-gray-50">{friend.name}</span>
+                            </button>
+                          ))
+                        }
+                      </div>
+                    )}
                   </div>
-                  {taggedFriends.length>0&&<p className="text-xs text-gray-500 dark:text-gray-400 mt-1">This event will be added to {taggedFriends.length+1} friend{taggedFriends.length+1!==1?'s':''}</p>}
+                  {taggedFriends.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mt-2">
+                      {taggedFriends.map(id => { const f = friends.find(fr => fr.id === id); if (!f) return null; return (
+                        <span key={id} className="flex items-center gap-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-1 rounded-full">
+                          {f.name}
+                          <button onClick={() => setTaggedFriends(taggedFriends.filter(fid => fid !== id))} className="text-gray-400 dark:text-gray-500 hover:text-gray-700"><X size={10} /></button>
+                        </span>
+                      ); })}
+                    </div>
+                  )}
+                  {taggedFriends.length > 0 && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">This event will be added to {taggedFriends.length+1} {taggedFriends.length+1!==1?'people':'person'}</p>}
                 </div>
               )}
-              <div><label className="block text-xs text-gray-600 dark:text-gray-400 mb-1.5">Notes (optional)</label><textarea placeholder={modalType==='reminder'?'Add any context for the reminder':'What did you talk about?'} value={checkInNote} onChange={(e) => setCheckInNote(e.target.value)} className="text-gray-900 dark:text-gray-50 placeholder-gray-400 dark:placeholder-gray-500 w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-md text-sm h-24 resize-none" /></div>
+              <div><label className="block text-xs text-gray-600 dark:text-gray-400 mb-1.5">Notes (optional)</label><textarea placeholder={modalType==='reminder'?'Add any context for the check-in':'What did you talk about?'} value={checkInNote} onChange={(e) => setCheckInNote(e.target.value)} className="text-gray-900 dark:text-gray-50 placeholder-gray-400 dark:placeholder-gray-500 w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-md text-sm h-24 resize-none" /></div>
               <div className="flex gap-3">
-                <button onClick={() => { setShowCheckInModal(false); setEditingReminder(null); setCheckInTitle(''); setCheckInNote(''); setIsRecurring(false); setRecurringPeriod(7); }} className="flex-1 px-4 py-2 border rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 text-sm text-gray-700 dark:text-gray-300">Cancel</button>
-                <button onClick={() => { if (modalType==='reminder') { if (editingReminder) { updateReminder(viewingFriend.id, editingReminder.id, checkInTitle||'Check in', checkInDate?parseLocalDate(checkInDate).toISOString():new Date().toISOString(), isRecurring, recurringPeriod); } else { addReminder(viewingFriend.id, checkInTitle||'Check in', checkInDate?parseLocalDate(checkInDate).toISOString():new Date().toISOString(), isRecurring, recurringPeriod); } } else { logEvent(viewingFriend.id, checkInTitle||'Touchpoint', checkInNote, checkInDate?parseLocalDate(checkInDate).toISOString():new Date().toISOString(), taggedFriends); setShowCheckInModal(false); setCheckInTitle(''); setCheckInNote(''); setIsRecurring(false); setRecurringPeriod(7); setTaggedFriends([]); } }} className="flex-1 px-4 py-2 bg-gray-900 dark:bg-gray-700 text-white rounded-md hover:bg-gray-800 dark:hover:bg-gray-600 text-sm">{modalType==='reminder' ? (editingReminder ? 'Save Reminder' : 'Add Reminder') : 'Log Event'}</button>
+                <button onClick={() => { setShowCheckInModal(false); setEditingReminder(null); setCheckInTitle(''); setCheckInNote(''); setIsRecurring(false); setRecurringPeriod(7); setTaggedFriendsSearch(''); }} className="flex-1 px-4 py-2 border rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 text-sm text-gray-700 dark:text-gray-300">Cancel</button>
+                <button onClick={() => { if (modalType==='reminder') { if (editingReminder) { updateReminder(viewingFriend.id, editingReminder.id, checkInTitle||'Check in', checkInDate?parseLocalDate(checkInDate).toISOString():new Date().toISOString(), isRecurring, recurringPeriod); } else { addReminder(viewingFriend.id, checkInTitle||'Check in', checkInDate?parseLocalDate(checkInDate).toISOString():new Date().toISOString(), isRecurring, recurringPeriod); } } else { logEvent(viewingFriend.id, checkInTitle||'Touchpoint', checkInNote, checkInDate?parseLocalDate(checkInDate).toISOString():new Date().toISOString(), taggedFriends); setShowCheckInModal(false); setCheckInTitle(''); setCheckInNote(''); setIsRecurring(false); setRecurringPeriod(7); setTaggedFriends([]); setTaggedFriendsSearch(''); } }} className="flex-1 px-4 py-2 bg-gray-900 dark:bg-gray-700 text-white rounded-md hover:bg-gray-800 dark:hover:bg-gray-600 text-sm">{modalType==='reminder' ? (editingReminder ? 'Save Check-in' : 'Add Check-in') : 'Log Event'}</button>
               </div>
             </div>
           </div>
@@ -1537,19 +1625,19 @@ export default function UnGhost() {
             <div className="space-y-4">
               <div><label className="block text-xs text-gray-600 dark:text-gray-400 mb-1.5">Title</label><input type="text" value={editingCheckIn.title} onChange={(e) => setEditingCheckIn({ ...editingCheckIn, title: e.target.value })} className="text-gray-900 dark:text-gray-50 placeholder-gray-400 dark:placeholder-gray-500 w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-md text-sm" autoFocus /></div>
               <div>
-                <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1.5">Friends</label>
+                <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1.5">People</label>
                 <div className="relative">
-                  <input type="text" placeholder="Search friends..." value={editCheckInFriendSearch} onChange={e => setEditCheckInFriendSearch(e.target.value)} className="text-gray-900 dark:text-gray-50 placeholder-gray-400 dark:placeholder-gray-500 w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-md" />
+                  <input type="text" placeholder="Search people..." value={editCheckInFriendSearch} onChange={e => setEditCheckInFriendSearch(e.target.value)} className="text-gray-900 dark:text-gray-50 placeholder-gray-400 dark:placeholder-gray-500 w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-md" />
                   {editCheckInFriendSearch.trim() && (
                     <div className="absolute z-20 w-full mt-1 bg-white dark:bg-gray-800 border rounded-md shadow-lg max-h-48 overflow-y-auto">
                       {friends.filter(f => f.name.toLowerCase().includes(editCheckInFriendSearch.toLowerCase()) && !(editingCheckIn.taggedFriendIds || []).includes(f.id))
                         .sort((a,b) => a.name.localeCompare(b.name)).length === 0
-                        ? <p className="px-3 py-2 text-sm text-gray-400 dark:text-gray-500">No friends found</p>
+                        ? <p className="px-3 py-2 text-sm text-gray-400 dark:text-gray-500">No people found</p>
                         : friends.filter(f => f.name.toLowerCase().includes(editCheckInFriendSearch.toLowerCase()) && !(editingCheckIn.taggedFriendIds || []).includes(f.id))
                             .sort((a,b) => a.name.localeCompare(b.name)).map(friend => (
                           <button key={friend.id} onClick={() => { setEditingCheckIn({ ...editingCheckIn, taggedFriendIds: [...(editingCheckIn.taggedFriendIds || []), friend.id] }); setEditCheckInFriendSearch(''); }} className="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 text-left">
                             {friend.profilePicture ? <img src={friend.profilePicture} alt={friend.name} className="w-6 h-6 rounded-full object-cover flex-shrink-0" /> : <div className={`w-6 h-6 rounded-full ${getProfileColor(friend.name)} text-white flex items-center justify-center text-[10px] font-medium flex-shrink-0`}>{getInitials(friend.name)}</div>}
-                            <span className="text-sm">{friend.name}</span>
+                            <span className="text-sm text-gray-900 dark:text-gray-50">{friend.name}</span>
                           </button>
                         ))
                       }
@@ -1582,7 +1670,7 @@ export default function UnGhost() {
       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 z-30 flex">
         {[
           { page: 'dashboard', icon: <Home size={20} />, label: 'Home' },
-          { page: 'friends', icon: <UserCircle size={20} />, label: 'Friends' },
+          { page: 'friends', icon: <UserCircle size={20} />, label: 'People' },
           { page: 'groups', icon: <Network size={20} />, label: 'Groups' },
           { page: 'events', icon: <Calendar size={20} />, label: 'Events' },
         ].map(({ page, icon, label }) => (
