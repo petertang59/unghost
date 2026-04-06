@@ -146,7 +146,7 @@ export default function UnGhost() {
     script.async = true;
     script.onload = () => {
       window.google?.accounts.id.initialize({
-        client_id: 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com',
+        client_id: '487139970331-s8jtj0lio0fn0plegumqmfsg0bsrrd8t.apps.googleusercontent.com',
         callback: (response) => {
           const payload = JSON.parse(atob(response.credential.split('.')[1]));
           const user = { name: payload.name, email: payload.email, picture: payload.picture };
