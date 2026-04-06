@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "dev",
+      "runtimeExecutable": "/usr/local/bin/node",
+      "runtimeArgs": ["/Users/PeterTang/Desktop/unghost/.claude/worktrees/happy-payne/node_modules/.bin/vite", "/Users/PeterTang/Desktop/unghost/.claude/worktrees/happy-payne"],
+      "port": 5173
+    }
+  ]
+}
