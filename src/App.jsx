@@ -1,6 +1,18 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { UserPlus, Calendar, Trash2, Edit2, X, Plus, Home, UserCircle, Network, ChevronDown, MoreVertical, Phone, Mail, Bell, Check, CheckCircle, Cake, ArrowUp, ArrowDown, Download, Upload, Menu, Search, Sun, Moon } from 'lucide-react';
 
+// Google G icon
+function GoogleIcon({ size = 16 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+    </svg>
+  );
+}
+
 // Smart dropdown that positions itself to avoid viewport clipping
 function SmartDropdown({ anchorRect, open, onClose, children }) {
   const [style, setStyle] = useState({});
@@ -99,6 +111,9 @@ export default function UnGhost() {
   const [taggedFriendsSearch, setTaggedFriendsSearch] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [isDark, setIsDark] = useState(() => localStorage.getItem('unghost-theme') === 'dark');
+  const [googleUser, setGoogleUser] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('unghost-google-user')); } catch { return null; }
+  });
   const [likesInput, setLikesInput] = useState('');
   const [hoveredFriendId, setHoveredFriendId] = useState(null);
   const [groupMemberSearch, setGroupMemberSearch] = useState('');
@@ -123,6 +138,36 @@ export default function UnGhost() {
     '#3B82F6','#10B981','#8B5CF6','#F59E0B','#EF4444','#EC4899','#14B8A6','#F97316',
   ];
   const groupIconPresets = ['👥', '💼', '🎓', '❤️', '🏠', '🎮', '⚽', '🎨', '🎵', '✈️', '🍕', '💪'];
+
+  // Google Sign-In (GIS)
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.onload = () => {
+      window.google?.accounts.id.initialize({
+        client_id: 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com',
+        callback: (response) => {
+          const payload = JSON.parse(atob(response.credential.split('.')[1]));
+          const user = { name: payload.name, email: payload.email, picture: payload.picture };
+          setGoogleUser(user);
+          localStorage.setItem('unghost-google-user', JSON.stringify(user));
+        },
+      });
+    };
+    document.head.appendChild(script);
+    return () => { if (document.head.contains(script)) document.head.removeChild(script); };
+  }, []);
+
+  const handleGoogleSignIn = useCallback(() => {
+    window.google?.accounts.id.prompt();
+  }, []);
+
+  const handleGoogleSignOut = useCallback(() => {
+    window.google?.accounts.id.disableAutoSelect();
+    setGoogleUser(null);
+    localStorage.removeItem('unghost-google-user');
+  }, []);
 
   useEffect(() => {
     async function loadData() {
@@ -514,10 +559,53 @@ export default function UnGhost() {
             </button>
           ))}
         </div>
+
+        {/* Google account — pinned to bottom of sidebar */}
+        <div className="mt-auto p-2 border-t border-gray-100 dark:border-gray-800">
+          {googleUser ? (
+            <div className={`flex items-center gap-2 p-1.5 rounded-md ${!sidebarOpen ? 'justify-center' : ''}`}>
+              <img src={googleUser.picture} alt={googleUser.name} className="w-6 h-6 rounded-full flex-shrink-0" referrerPolicy="no-referrer" />
+              {sidebarOpen && (
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium text-gray-900 dark:text-gray-50 truncate">{googleUser.name}</p>
+                  <button onClick={handleGoogleSignOut} className="text-xs text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors">Sign out</button>
+                </div>
+              )}
+            </div>
+          ) : sidebarOpen ? (
+            <button onClick={handleGoogleSignIn} className="w-full flex items-center gap-2 px-2.5 py-2 rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 text-sm text-gray-700 dark:text-gray-300 transition-colors">
+              <GoogleIcon size={16} />
+              Sign in with Google
+            </button>
+          ) : (
+            <button onClick={handleGoogleSignIn} title="Sign in with Google" className="w-full flex items-center justify-center p-1.5 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+              <GoogleIcon size={16} />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Main content */}
       <div className="flex-1 min-w-0 pb-16 md:pb-0">
+
+        {/* Mobile Google account bar */}
+        <div className="md:hidden flex items-center justify-between px-4 pt-4 pb-1">
+          <span className="text-sm font-semibold text-gray-900 dark:text-gray-50">UnGhost</span>
+          {googleUser ? (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-500 dark:text-gray-400 hidden xs:block">{googleUser.name}</span>
+              <button onClick={handleGoogleSignOut} title="Sign out" className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors">
+                <img src={googleUser.picture} alt={googleUser.name} className="w-7 h-7 rounded-full" referrerPolicy="no-referrer" />
+              </button>
+            </div>
+          ) : (
+            <button onClick={handleGoogleSignIn} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 text-xs text-gray-700 dark:text-gray-300 transition-colors">
+              <GoogleIcon size={14} />
+              Sign in
+            </button>
+          )}
+        </div>
+
         <div className="max-w-[960px] mx-auto px-4 md:px-6 py-6">
 
           {/* Friend Detail View */}
